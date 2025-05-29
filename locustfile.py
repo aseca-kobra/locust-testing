@@ -1,7 +1,5 @@
 import random
-from locust import HttpUser, task, between, events
-from typing import Dict, Any
-import json
+from locust import HttpUser, task, between
 import logging
 
 # Configure logging
@@ -9,18 +7,18 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class KobraUser(HttpUser):
-    # UI Configuration
-    wait_time = between(1, 3)  # Wait 1-3 seconds between tasks
 
+# UI Configuration
+wait_time = between(1, 3)
+
+class KobraUser(HttpUser):
     # Test Configuration
     min_transfer_amount = 1
-    max_transfer_amount = 100
+    max_transfer_amount = 2
     min_deposit_amount = 10
     max_deposit_amount = 1000
 
     def on_start(self):
-        """Initialize user session and login"""
         try:
             # Log in as either user1 or user2
             self.user = random.choice(['user1', 'user2'])
@@ -30,7 +28,6 @@ class KobraUser(HttpUser):
             raise
 
     def login(self) -> tuple:
-        """Login and return token, user_id, and wallet_id"""
         try:
             response = self.client.post('/auth/login', json={
                 'email': f'{self.user}@example.com',
@@ -50,7 +47,6 @@ class KobraUser(HttpUser):
 
     @task(3)
     def check_balance_and_transactions(self):
-        """Check balance and recent transactions"""
         try:
             # First check balance
             balance_response = self.client.get(
@@ -70,7 +66,6 @@ class KobraUser(HttpUser):
 
     @task(2)
     def perform_transfer(self):
-        """Perform a money transfer to another user"""
         try:
             other_user = 'user2' if self.user == 'user1' else 'user1'
             amount = random.randint(self.min_transfer_amount, self.max_transfer_amount)
@@ -89,7 +84,6 @@ class KobraUser(HttpUser):
 
     @task(1)
     def perform_deposit(self):
-        """Perform a deposit to the wallet"""
         try:
             amount = random.randint(self.min_deposit_amount, self.max_deposit_amount)
 
@@ -107,7 +101,6 @@ class KobraUser(HttpUser):
 
     @task(1)
     def request_debin(self):
-        """Request a debin payment"""
         try:
             amount = random.randint(self.min_deposit_amount, self.max_deposit_amount)
 
@@ -123,8 +116,3 @@ class KobraUser(HttpUser):
         except Exception as e:
             logger.error(f"Debin request failed: {str(e)}")
 
-
-# Add event handlers for better monitoring
-@events.request_failure.add_listener
-def on_request_failure(request_type, name, response_time, exception, **kwargs):
-    logger.error(f"Request failed: {request_type} {name} - {str(exception)}")
