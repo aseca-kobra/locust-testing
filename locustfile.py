@@ -22,7 +22,7 @@ class UserCounter:
 user_counter = UserCounter(max_numbered_users=1000)
 
 class WalletUser(HttpUser):
-    wait_time = between(1, 4)
+    wait_time = between(1, 3)
 
     def on_start(self):
         try:
